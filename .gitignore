@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+.DS_Store
+
+# User input and local state
+Connections.csv
+offer.md
+decision-maker-roles.txt
+outreach.csv
+*.outreach.csv
+.env
+auth.json
+credentials.json

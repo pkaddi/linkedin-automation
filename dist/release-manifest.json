@@ -1,0 +1,11 @@
+{
+  "name": "linkedin-decision-maker-outreach",
+  "version": "0.1.0",
+  "sha256": {
+    "chatgpt-work-0.1.0.zip": "daff92bcdbefa8c496a4601f79aa068bef0a3651e480c796732962fd025da2e5",
+    "claude-cowork-0.1.0.zip": "27f2aa4b8900e17cc005fb489b6fa5d1990b491b0a7a3acc9f1bcd7e4defe481",
+    "claude-marketplace-0.1.0.zip": "63f1e28b01afe28b4e7054a6af4c34a939f063c1272706ea9e045c4bca92c44b",
+    "hermes-profile-0.1.0.zip": "07c44f8d8855ea73e575f57d0de531658c5f0341ea06f28c3f968c92827a6664",
+    "hermes-skill-0.1.0.zip": "40f7f8381131cd7bdbc6f1dd062ef5b2b8e3c4bf2dd5a530d2cd33667efc9b7c"
+  }
+}

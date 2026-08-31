@@ -1,0 +1,5 @@
+# One role per line. Use only roles that could approve or sponsor this offer.
+Chief Operating Officer
+VP Operations
+Head of Operations
+Director of Operations

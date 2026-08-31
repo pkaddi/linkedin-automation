@@ -1,0 +1,16 @@
+{
+  "name": "hermes-stuff",
+  "description": "Portable, approval-gated business workflow plugins from Hermes Stuff.",
+  "version": "0.1.0",
+  "owner": {
+    "name": "Hermes Stuff"
+  },
+  "plugins": [
+    {
+      "name": "linkedin-decision-maker-outreach",
+      "source": "./plugins/linkedin-decision-maker-outreach",
+      "description": "Create sourced LinkedIn drafts in an approval CSV and dispatch exact approved text through an authorized connector or manual handoff.",
+      "version": "0.1.0"
+    }
+  ]
+}
