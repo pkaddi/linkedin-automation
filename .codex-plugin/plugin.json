@@ -1,7 +1,7 @@
 {
   "name": "linkedin-decision-maker-outreach",
-  "version": "0.1.0",
-  "description": "Research, draft, approve, and safely dispatch small batches of LinkedIn messages to relevant first-degree connections.",
+  "version": "0.1.1",
+  "description": "Research, draft, approve, and track manual LinkedIn outreach to relevant first-degree connections.",
   "author": {
     "name": "Hermes Stuff"
   },
@@ -9,15 +9,15 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "LinkedIn Decision-Maker Outreach",
-    "shortDescription": "Create and dispatch reviewed LinkedIn outreach.",
-    "longDescription": "Turn a LinkedIn connections export, an offer, and target roles into researched drafts in an approval CSV, then dispatch exact approved messages through an authorized connector or manual handoff.",
+    "shortDescription": "Create reviewed LinkedIn outreach drafts.",
+    "longDescription": "Turn a LinkedIn connections export, an offer, and target roles into researched drafts in an approval CSV, then track manual delivery. The current release does not connect to LinkedIn.",
     "developerName": "Hermes Stuff",
     "category": "Productivity",
-    "capabilities": ["Research", "Drafting", "Write actions"],
+    "capabilities": ["Research", "Drafting", "Local CSV tracking"],
     "defaultPrompt": [
       "Create an outreach tracker from my offer and LinkedIn connections export.",
       "Research the approved target companies and draft concise LinkedIn messages.",
-      "Prepare up to five sealed messages for confirmed dispatch from my tracker."
+      "Prepare up to five sealed messages for manual sending from my tracker."
     ]
   }
 }

@@ -1,6 +1,6 @@
 name: linkedin-decision-maker-outreach
-version: 0.1.0
-description: Approval-gated LinkedIn outreach for the user's own first-degree connections.
+version: 0.1.1
+description: Local research, approval, and manual delivery tracking for the user's own first-degree LinkedIn connections.
 hermes_requires: ">=0.16.0"
 author: hermes-stuff
 license: Proprietary

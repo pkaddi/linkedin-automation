@@ -1,11 +1,11 @@
 ---
 name: linkedin-decision-maker-outreach
-description: Prepare and, only after explicit approval, dispatch personalized LinkedIn messages to relevant first-degree connections using an offer Markdown file, decision-maker roles, and a LinkedIn Connections.csv export. Use for small, reviewed outreach batches with an authorized connector or manual send handoff; do not use for profile scraping, browser-bot sending, unapproved messages, or bulk cold outreach.
+description: Prepare personalized LinkedIn messages for relevant first-degree connections using an offer Markdown file, decision-maker roles, and a LinkedIn Connections.csv export. Use for researched drafts, local CSV approval, and manual send tracking. The current release does not connect to LinkedIn or send messages.
 ---
 
 # LinkedIn Decision Maker Outreach
 
-Turn a user's LinkedIn connection export into a local, reviewable outreach queue. The CSV tracker is the source of truth. Research and drafting can happen in one run. Dispatch is always a separate, explicitly authorized run.
+Turn a user's LinkedIn connection export into a local, reviewable outreach queue. The CSV tracker is the source of truth. Research and drafting can happen in one run. The current release provides a manual send handoff and does not connect to LinkedIn.
 
 ## Inputs
 
@@ -87,14 +87,11 @@ python "<skill-directory>/scripts/outreach_tracker.py" summary --tracker outreac
 
 The seal binds the recipient name, profile URL, and exact message. Any edit to that payload invalidates approval. Reapproval and resealing are required. The state rules and columns are in [tracker-schema.md](references/tracker-schema.md).
 
-## Dispatch approved messages
+## Hand off approved messages
 
-Only enter this section when the user explicitly asks in the current conversation to send approved rows. Preparing drafts or approving the CSV is not permission to send.
+Only enter this section when the user explicitly asks for approved rows that are ready to send. Preparing drafts or approving the CSV is not permission to mark a message as sent.
 
-Do not automate LinkedIn's website or click its Send button. LinkedIn's current User Agreement prohibits unauthorized automated methods that send messages. There are two allowed modes:
-
-- **Authorized connector:** use a host connector or API only when it expressly supports LinkedIn messaging for this account and the user has authorized its write scope.
-- **Manual handoff:** show the profile link and exact sealed text so the user can paste and send it themselves. This is the default when no authorized connector is available.
+The current release has no LinkedIn connection code. It must show the profile link and exact sealed text so the user can paste and send the message. Do not claim that `begin-send` or `mark-sent` performs a LinkedIn action. Both commands update only the local CSV tracker.
 
 List ready rows first and cap each run at five:
 
@@ -105,7 +102,7 @@ python "<skill-directory>/scripts/outreach_tracker.py" ready --tracker outreach.
 For each row, one at a time:
 
 1. Show the recipient name, stored profile URL, exact message, and approved payload hash.
-2. Ask the user to confirm this write action immediately before dispatch. A past or blanket approval is not enough.
+2. Ask the user to confirm that they want the manual send handoff.
 3. Lock the exact approved text:
 
    ```bash
@@ -114,9 +111,8 @@ For each row, one at a time:
      --expected-payload-sha APPROVED_PAYLOAD_SHA256
    ```
 
-4. In authorized-connector mode, call the connector once with the exact recipient and text, then use its supported delivery result. Do not substitute browser automation.
-5. In manual-handoff mode, wait while the user sends it. Ask them to confirm that the exact message appears as a new outgoing message.
-6. Record success only after connector proof or the user's confirmation:
+4. Wait while the user sends the message in LinkedIn. Ask them to confirm that the exact message appears as a new outgoing message.
+5. Record success only after the user's confirmation:
 
    ```bash
    python "<skill-directory>/scripts/outreach_tracker.py" mark-sent \
@@ -144,6 +140,6 @@ Omit `--safe-to-retry` whenever delivery is uncertain.
 - Never run concurrent sending sessions or send more than five messages per run.
 - Stop on an account warning, checkpoint, unexpected audience, ambiguous delivery, or changed LinkedIn UI.
 - Follow the user's employer policy, LinkedIn terms, and applicable outreach law.
-- If no authorized messaging connector exists, use manual handoff while keeping the CSV state accurate.
+- Use manual handoff while keeping the CSV state accurate. The requirements define CDP automation as the next milestone, but the CDP sender is not part of this release.
 
 Use [reviewer-test-cases.md](references/reviewer-test-cases.md) when testing or submitting the package for public distribution.

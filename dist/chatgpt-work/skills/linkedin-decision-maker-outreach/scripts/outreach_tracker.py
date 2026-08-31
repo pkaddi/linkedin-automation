@@ -2,8 +2,8 @@
 """Manage the approval CSV for LinkedIn decision maker outreach.
 
 The script never opens LinkedIn and never sends a message. It keeps the local
-CSV in a valid state while the host agent performs research, drafting, and an
-authorized-connector or manual send handoff.
+CSV in a valid state while the host agent performs research, drafting, and a
+manual send handoff.
 """
 
 from __future__ import annotations
@@ -720,7 +720,7 @@ def build_parser() -> argparse.ArgumentParser:
     begin.add_argument("--expected-payload-sha", required=True)
     begin.set_defaults(handler=command_begin_send)
 
-    sent = subparsers.add_parser("mark-sent", help="Mark sent after connector proof or user confirmation.")
+    sent = subparsers.add_parser("mark-sent", help="Mark sent after the user confirms manual delivery.")
     sent.add_argument("--tracker", type=Path, required=True)
     sent.add_argument("--id", "--record-id", dest="record_id", required=True)
     sent.add_argument("--expected-payload-sha", required=True)

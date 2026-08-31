@@ -6,6 +6,22 @@ The plugin helps a user prepare relevant LinkedIn outreach for decision makers w
 
 The plugin must never treat a draft as permission to send a message. The user must approve the exact recipient and message before dispatch.
 
+## Current implementation status
+
+Version 0.1.1 is a local preparation, review, and tracking tool. It does not connect to LinkedIn and cannot send a LinkedIn message.
+
+The current code can complete the following work.
+
+1. It imports a LinkedIn `Connections.csv` export that the user downloaded manually.
+2. It matches decision maker roles and keeps research, sources, drafts, approvals, and delivery history in `outreach.csv`.
+3. It seals the exact recipient and message with SHA 256 hashes, and it rejects a changed recipient or message.
+4. It prepares a queue of up to five approved rows and records local state changes.
+5. It builds packages for Hermes, Claude Cowork, Claude marketplaces, and ChatGPT Work or Codex.
+
+The `ready`, `begin-send`, `mark-sent`, and `mark-failed` commands only read or update the local CSV file. They do not open LinkedIn, control a browser, paste a message, click Send, or verify delivery.
+
+The current code does not contain Chrome CDP support, Playwright, Selenium, a LinkedIn API client, OAuth, or a messaging connector. Manual sending is the only usable delivery path in version 0.1.1.
+
 ## Supported inputs
 
 The plugin accepts the following inputs.
@@ -84,26 +100,50 @@ The dispatch payload contains the record ID, recipient name, profile URL, and me
 
 The `ready` and `begin-send` commands must reject a row whose current payload does not match the sealed payload. The user must approve and seal the changed row again.
 
-## Dispatch behavior in version 0.1.0
+## Current manual delivery behavior
 
-Version 0.1.0 does not contain a Chrome CDP sender. It does not open LinkedIn, paste into the LinkedIn composer, or click the LinkedIn Send button.
+Version 0.1.1 can prepare a manual delivery handoff. The plugin shows the recipient, profile URL, exact sealed message, and payload hash. The user sends the message in LinkedIn and confirms the result. The tracker is marked as sent only after the user confirms that the exact message was sent.
 
-Version 0.1.0 supports two dispatch paths.
+The plugin processes no more than five ready messages in one run, and it handles one message at a time. If delivery is unclear, the row moves to `manual_review`. The plugin must not treat an uncertain message as safe to retry.
 
-1. Manual sending is the default path. The plugin shows the recipient, profile URL, exact sealed message, and payload hash. The user sends the message in LinkedIn and confirms the result. The tracker is marked as sent only after that confirmation.
-2. A host may supply a separate connector that uses a LinkedIn approved messaging API for the user's account. The plugin can call the connector only after showing the exact write action and receiving immediate confirmation. No connector is included in this repository.
+## Next implementation milestone
 
-The plugin must never describe Chrome CDP or another browser controller as an approved connector.
+Version 0.2.0 must add working LinkedIn message sending through Chrome CDP. CDP means the Chrome DevTools Protocol, which lets local code control an existing Chrome browser.
 
-## Dispatch limits and failure handling
+Chrome CDP must be the only automated LinkedIn transport. Version 0.2.0 must not add a LinkedIn API client, an OAuth flow, a host supplied messaging connector, or a generic connector interface. Manual handoff may remain as a recovery path, but all automatic sending must use CDP.
 
-The plugin processes no more than five ready messages in one dispatch run. It handles one message at a time.
+The CDP implementation must complete the following work.
 
-The plugin records `sending` before dispatch begins. It records `sent` only after connector proof or the user's confirmation.
+1. It attaches to a user managed Chrome process through an explicit CDP endpoint. The default endpoint must be on `127.0.0.1` or `localhost`.
+2. It uses the LinkedIn session that is already signed in inside that Chrome profile. It must not request, read, export, or store a LinkedIn password or session cookie.
+3. It checks that LinkedIn is signed in and that the messaging interface is available before changing any tracker state.
+4. It reads no more than five sealed rows from the local tracker and processes them one at a time.
+5. It checks the current recipient, profile URL, message text, and approved payload hash immediately before opening LinkedIn.
+6. It opens the stored LinkedIn profile, opens the message composer, and verifies the intended recipient before entering text.
+7. It enters the exact sealed message without rewriting it, and it verifies the text in the composer before clicking Send.
+8. It clicks Send only after the user has approved the CSV row and explicitly started the CDP dispatch command.
+9. It verifies that the exact message appears as a new outgoing message before recording `sent` in the tracker.
+10. It records `sending` before the click. It records `manual_review` when the click may have happened but delivery cannot be proved.
 
-If failure is certain before a send occurs, the row may return to `ready`. If the send may have occurred, the row moves to `manual_review`. The plugin must not retry an uncertain send.
+The CDP sender must fail closed. It must stop before sending when the browser is unavailable, LinkedIn is signed out, the recipient is different, the payload hash changed, the composer contains unexpected text, the UI cannot be identified, or LinkedIn shows an account warning or checkpoint.
 
-The plugin must stop when the recipient is unexpected, the approved payload changed, delivery is unclear, or the account reports a restriction.
+The sender must not retry an uncertain send. It must not solve a CAPTCHA, bypass a restriction, hide automation, use anti detection code, or run concurrent sending sessions. A remote CDP endpoint must be rejected unless the user enables a separate explicit option for it.
+
+LinkedIn selectors must live in a versioned selector file instead of being spread through the sending code. Each important control must have a small ordered set of selectors. A missing selector must produce a clear error and must not cause a click on an unverified element.
+
+## Required CDP commands and files
+
+Version 0.2.0 must add a dedicated CDP sender under the canonical skill. The distribution builder must copy the sender and its selector file into every package.
+
+The planned files are `scripts/linkedin_cdp.py` and `references/linkedin-selectors.json`. The sender may use a maintained CDP library, but it must attach through CDP and must not launch a hidden or separate browser.
+
+The sender must provide a read only preflight command. The command checks the CDP endpoint, Chrome version, LinkedIn sign in state, and required selectors. It must not open a composer or change the tracker.
+
+The sender must provide a dispatch command with `--tracker`, `--cdp-url`, and `--limit` options. The command must require an explicit confirmation option before it can click Send. The limit must accept values from one to five.
+
+The sender must use the existing tracker state commands instead of creating a separate database. It must call the same approval and payload checks before each attempt. The tracker schema must add only the fields needed to record the conversation URL, attempt ID, verification time, and delivery proof.
+
+The CDP code must separate browser operations from tracker operations so automated tests can run against a fake CDP session. A live test must use an account and recipient owned by the publisher.
 
 ## Privacy and security
 
@@ -125,9 +165,9 @@ The builder creates the following outputs from the same canonical skill.
 
 The builder creates deterministic ZIP files and records each SHA 256 checksum in `release-manifest.json`.
 
-## Acceptance requirements
+## Current release acceptance requirements
 
-Version 0.1.0 is accepted when all of the following statements are true.
+Version 0.1.1 is accepted when all of the following statements are true.
 
 1. The importer reads a LinkedIn export with note lines and does not copy email addresses.
 2. A repeat import keeps prior research for an unchanged connection.
@@ -140,8 +180,25 @@ Version 0.1.0 is accepted when all of the following statements are true.
 9. The platform packages pass their local validators.
 10. The generated Hermes profile installs in an isolated Hermes home.
 
-## Work not included in version 0.1.0
+## CDP milestone acceptance requirements
 
-The release does not include Chrome CDP message sending, a LinkedIn messaging API connector, automatic connection export, a hosted database, a web dashboard, or multiuser access.
+Version 0.2.0 is accepted only when all of the following statements are true.
+
+1. The sender attaches to a local Chrome CDP endpoint and reports a clear error when the endpoint is unavailable.
+2. The sender detects a signed out LinkedIn session without requesting credentials.
+3. The sender refuses every row that is not matched, researched, approved, sealed, and ready.
+4. The sender verifies the recipient and exact sealed message before clicking Send.
+5. A controlled test sends one message to an account owned by the publisher and verifies the exact outgoing message.
+6. A batch cannot contain more than five messages, and only one message can be in progress.
+7. A confirmed send records `sent`, its timestamp, and the approved payload hash.
+8. An uncertain send records `manual_review` and is not retried automatically.
+9. Automated tests cover the CDP state changes, recipient mismatch, text mismatch, selector failure, signed out state, and uncertain delivery.
+10. The Hermes, Claude Cowork, Claude marketplace, and ChatGPT Work or Codex packages contain the CDP sender and pass their validators.
+
+## Work not included in version 0.1.1
+
+The current release does not include Chrome CDP message sending, automatic connection export, a hosted database, a web dashboard, or multiuser access.
+
+Version 0.2.0 will add CDP sending. It will not add a LinkedIn API client, OAuth, or another automated transport.
 
 The release does not include a public publisher identity, final license file, logo, privacy policy URL, terms URL, support URL, or marketplace submission. The repository uses the working publisher name "Hermes Stuff" and a proprietary marker until the owner chooses the final release details.

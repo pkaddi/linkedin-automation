@@ -4,9 +4,11 @@ LinkedIn Decision Maker Outreach creates researched messages for relevant people
 
 The plugin saves its work in a local CSV file. A later run can see which connections were researched, which messages are waiting for approval, and which messages were marked as sent.
 
-Version 0.1.0 does not automate LinkedIn through Chrome CDP. It does not click the LinkedIn Send button. After approval, it either gives the user the exact message for manual sending or uses a separate LinkedIn approved messaging connector supplied by the host. No such connector is included in this repository.
+Version 0.1.1 does not connect to LinkedIn. It does not open a browser, paste a message, or click Send. The current release prepares the exact message for manual sending and records the result after the user confirms it.
 
-Read [REQUIREMENTS.md](REQUIREMENTS.md) for the full product behavior and limits.
+The next milestone is version 0.2.0. It will add automatic sending through Chrome CDP and no other automated transport. Read [REQUIREMENTS.md](REQUIREMENTS.md) for the exact CDP behavior and acceptance tests.
+
+The CDP sender has not been implemented yet.
 
 ## Inputs
 

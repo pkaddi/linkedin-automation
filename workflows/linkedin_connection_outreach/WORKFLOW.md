@@ -5,7 +5,7 @@ status: scaffold
 profile_status: fixture_ready
 platforms: [linux, macos, windows]
 skills: [linkedin-decision-maker-outreach]
-runtime_capabilities: [web_research, csv, authorized_messaging_connector_optional]
+runtime_capabilities: [web_research, csv, manual_send_handoff]
 runner_support: [hermes, claude, chatgpt]
 inputs:
   offer_md: required
@@ -21,7 +21,7 @@ output: outreach.csv
 
 ## Goal
 
-Create relevant, researched LinkedIn messages for decision makers already connected to the user. Put every draft into a local CSV for human approval. Dispatch only sealed, approved text in a separate run through an authorized connector or manual handoff.
+Create relevant, researched LinkedIn messages for decision makers already connected to the user. Put every draft into a local CSV for human approval. The current release provides a manual send handoff and does not connect to LinkedIn.
 
 ## Existing patterns reused
 
@@ -39,8 +39,8 @@ Create relevant, researched LinkedIn messages for decision makers already connec
 4. Research selected companies from public sources outside LinkedIn, in resumable batches of at most 20.
 5. Draft a message of 80 words or fewer and save it with research sources.
 6. Let the user edit `approval_status` in the CSV, then seal the approved message hashes.
-7. On a separate explicit request, dispatch no more than five ready messages, one at a time. Use an authorized messaging connector or give the user a manual handoff. Do not automate LinkedIn's website.
-8. Update the CSV from connector proof or the user's confirmation after each attempt. Stop on uncertainty.
+7. On a separate explicit request, prepare no more than five ready messages, one at a time, for manual sending.
+8. Update the CSV after the user confirms each attempt. Stop on uncertainty.
 
 ## Boundaries
 
@@ -49,4 +49,4 @@ Create relevant, researched LinkedIn messages for decision makers already connec
 - No sensitive-trait profiling or unsupported personalization.
 - No automatic retry after a possibly successful send.
 
-The portable implementation lives in `skills/linkedin-decision-maker-outreach/`. Keep `profile_status` at `fixture_ready` until one controlled manual handoff or approved connector dispatch has been tested on the publisher's own account.
+The portable implementation lives in `skills/linkedin-decision-maker-outreach/`. Keep `profile_status` at `fixture_ready` until one controlled manual handoff has been tested on the publisher's own account. The requirements define Chrome CDP sending as the next milestone.

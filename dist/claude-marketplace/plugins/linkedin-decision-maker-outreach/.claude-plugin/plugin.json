@@ -1,7 +1,7 @@
 {
   "name": "linkedin-decision-maker-outreach",
-  "version": "0.1.0",
-  "description": "Research, draft, approve, and safely dispatch small batches of LinkedIn messages to relevant first-degree connections.",
+  "version": "0.1.1",
+  "description": "Research, draft, approve, and track manual LinkedIn outreach to relevant first-degree connections.",
   "author": {
     "name": "Hermes Stuff"
   },

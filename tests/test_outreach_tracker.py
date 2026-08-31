@@ -244,7 +244,7 @@ def test_uncertain_send_requires_manual_review_and_limit_is_enforced(tmp_path: P
         "--record-id",
         target["record_id"],
         "--error",
-        "The connector timed out after accepting the write.",
+        "The user could not confirm whether the message was sent.",
     )
     assert failed["send_status"] == "manual_review"
     assert run_tracker("ready", "--tracker", tracker)["count"] == 0

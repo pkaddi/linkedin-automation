@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 PACKAGE_ID = "linkedin-decision-maker-outreach"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_SOURCE = REPO_ROOT / "skills"
 GENERATED_MARKER = ".generated-by-linkedin-outreach-builder"
@@ -32,8 +32,8 @@ CLAUDE_MARKETPLACE = {
             "name": PACKAGE_ID,
             "source": f"./plugins/{PACKAGE_ID}",
             "description": (
-                "Create sourced LinkedIn drafts in an approval CSV and dispatch exact "
-                "approved text through an authorized connector or manual handoff."
+                "Create sourced LinkedIn drafts in an approval CSV and track exact "
+                "approved text through a manual send handoff."
             ),
             "version": VERSION,
         }

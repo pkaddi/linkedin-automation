@@ -18,7 +18,7 @@ SPEC.loader.exec_module(BUILDER)
 def test_builder_creates_all_platform_layouts_and_checksums(tmp_path: Path) -> None:
     output = tmp_path / "package"
     result = BUILDER.build(output)
-    assert result["version"] == "0.1.0"
+    assert result["version"] == "0.1.1"
     assert (output / "chatgpt-work" / ".codex-plugin" / "plugin.json").is_file()
     assert (output / "claude-cowork" / ".claude-plugin" / "plugin.json").is_file()
     assert (output / "claude-marketplace" / ".claude-plugin" / "marketplace.json").is_file()
@@ -49,9 +49,9 @@ def test_builder_creates_all_platform_layouts_and_checksums(tmp_path: Path) -> N
                 )
             assert not any("__pycache__" in name or name.endswith(".pyc") for name in names)
 
-    with zipfile.ZipFile(output / "claude-cowork-0.1.0.zip") as package:
+    with zipfile.ZipFile(output / "claude-cowork-0.1.1.zip") as package:
         assert ".claude-plugin/plugin.json" in package.namelist()
-    with zipfile.ZipFile(output / "chatgpt-work-0.1.0.zip") as package:
+    with zipfile.ZipFile(output / "chatgpt-work-0.1.1.zip") as package:
         assert ".codex-plugin/plugin.json" in package.namelist()
 
 

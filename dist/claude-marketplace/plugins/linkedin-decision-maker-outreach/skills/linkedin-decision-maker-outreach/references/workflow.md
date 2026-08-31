@@ -38,9 +38,9 @@ If the user edits an approved message later, the hash no longer matches. The wor
 
 ## 6. Separate dispatch run
 
-Sending requires an explicit request in the current conversation. Process no more than five rows, serially. Use an authorized LinkedIn messaging connector when one is available. Otherwise show the exact sealed text for the user to send manually. Do not automate LinkedIn's website.
+Sending requires an explicit request in the current conversation. The current release does not connect to LinkedIn. Process no more than five rows, serially, and show the exact sealed text for the user to send manually.
 
-Before each dispatch, show the recipient and exact text and ask for immediate confirmation. Update the tracker from connector proof or the user's delivery confirmation after every attempt.
+Before each manual handoff, show the recipient and exact text. Update the tracker only after the user confirms delivery.
 
 Delivery uncertainty is a hard stop. Mark the row `manual_review` without retrying so the user can inspect the conversation.
 
