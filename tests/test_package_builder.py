@@ -18,7 +18,7 @@ SPEC.loader.exec_module(BUILDER)
 def test_builder_creates_all_platform_layouts_and_checksums(tmp_path: Path) -> None:
     output = tmp_path / "package"
     result = BUILDER.build(output)
-    assert result["version"] == "0.1.1"
+    assert result["version"] == "0.2.0"
     assert (output / "chatgpt-work" / ".codex-plugin" / "plugin.json").is_file()
     assert (output / "claude-cowork" / ".claude-plugin" / "plugin.json").is_file()
     assert (output / "claude-marketplace" / ".claude-plugin" / "marketplace.json").is_file()
@@ -32,6 +32,22 @@ def test_builder_creates_all_platform_layouts_and_checksums(tmp_path: Path) -> N
     ).is_file()
     assert (output / "hermes-skill" / "SKILL.md").is_file()
     assert (output / "hermes-profile" / "distribution.yaml").is_file()
+    assert (
+        output
+        / "hermes-profile"
+        / "skills"
+        / "linkedin-decision-maker-outreach"
+        / "scripts"
+        / "linkedin_cdp.py"
+    ).is_file()
+    assert (
+        output
+        / "hermes-profile"
+        / "skills"
+        / "linkedin-decision-maker-outreach"
+        / "references"
+        / "linkedin-selectors.json"
+    ).is_file()
 
     manifest = json.loads((output / "release-manifest.json").read_text(encoding="utf-8"))
     assert set(manifest["sha256"]) == set(result["artifacts"])
@@ -49,9 +65,11 @@ def test_builder_creates_all_platform_layouts_and_checksums(tmp_path: Path) -> N
                 )
             assert not any("__pycache__" in name or name.endswith(".pyc") for name in names)
 
-    with zipfile.ZipFile(output / "claude-cowork-0.1.1.zip") as package:
+    with zipfile.ZipFile(output / "claude-cowork-0.2.0.zip") as package:
         assert ".claude-plugin/plugin.json" in package.namelist()
-    with zipfile.ZipFile(output / "chatgpt-work-0.1.1.zip") as package:
+        assert any(name.endswith("scripts/linkedin_cdp.py") for name in package.namelist())
+        assert any(name.endswith("references/linkedin-selectors.json") for name in package.namelist())
+    with zipfile.ZipFile(output / "chatgpt-work-0.2.0.zip") as package:
         assert ".codex-plugin/plugin.json" in package.namelist()
 
 

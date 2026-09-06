@@ -1,0 +1,60 @@
+{
+  "version": "2026-09-03",
+  "selectors": {
+    "signed_in": [
+      "header.global-nav",
+      "nav[aria-label='Primary Navigation']",
+      "a[href*='/feed/']"
+    ],
+    "signed_out": [
+      "form.login__form",
+      "input#username",
+      "input[type='email']",
+      "input[type='password']",
+      "a[href*='/login']"
+    ],
+    "account_warning": [
+      "form[action*='checkpoint']",
+      "[data-test-id*='challenge']",
+      "iframe[src*='captcha']"
+    ],
+    "messaging_root": [
+      "main.scaffold-layout__main",
+      "section.msg-conversations-container",
+      "div.msg-overlay-list-bubble"
+    ],
+    "profile_identity": [
+      "main h1.text-heading-xlarge",
+      "main h1",
+      "section.artdeco-card h1"
+    ],
+    "message_button": [
+      "main button:has-text('Message')",
+      "main a:has-text('Message')",
+      "button[aria-label^='Message ']"
+    ],
+    "composer": [
+      "div.msg-form__contenteditable[contenteditable='true']",
+      "div[role='textbox'][contenteditable='true']"
+    ],
+    "composer_recipient": [
+      "div.msg-overlay-bubble-header h2",
+      "div.msg-overlay-bubble-header a[href*='/in/']",
+      "header.msg-thread__topcard h2"
+    ],
+    "send_button": [
+      "button.msg-form__send-button",
+      "form.msg-form button[type='submit']:has-text('Send')",
+      "div.msg-form button[type='submit']:has-text('Send')"
+    ],
+    "outgoing_message": [
+      "li.msg-s-message-list__event--own .msg-s-event-listitem__body",
+      "li.msg-s-message-list__event:has(.msg-s-message-group__name:has-text('You')) .msg-s-event-listitem__body",
+      "li.msg-s-message-list__event:has([aria-label^='You']) .msg-s-event-listitem__body"
+    ],
+    "conversation_link": [
+      "a[href*='/messaging/thread/']",
+      "a[href*='/messaging/conversation/']"
+    ]
+  }
+}

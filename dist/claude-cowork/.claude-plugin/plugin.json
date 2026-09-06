@@ -1,7 +1,7 @@
 {
   "name": "linkedin-decision-maker-outreach",
-  "version": "0.1.1",
-  "description": "Research, draft, approve, and track manual LinkedIn outreach to relevant first-degree connections.",
+  "version": "0.2.0",
+  "description": "Research, approve, and send exact LinkedIn outreach through a user-managed Chrome CDP session.",
   "author": {
     "name": "Hermes Stuff"
   },

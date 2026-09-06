@@ -1,11 +1,11 @@
 ---
 name: LinkedIn connection outreach
 category: outreach
-status: scaffold
-profile_status: fixture_ready
+status: implemented
+profile_status: cdp_candidate
 platforms: [linux, macos, windows]
 skills: [linkedin-decision-maker-outreach]
-runtime_capabilities: [web_research, csv, manual_send_handoff]
+runtime_capabilities: [web_research, csv, chrome_cdp, manual_send_handoff]
 runner_support: [hermes, claude, chatgpt]
 inputs:
   offer_md: required
@@ -21,7 +21,7 @@ output: outreach.csv
 
 ## Goal
 
-Create relevant, researched LinkedIn messages for decision makers already connected to the user. Put every draft into a local CSV for human approval. The current release provides a manual send handoff and does not connect to LinkedIn.
+Create relevant, researched LinkedIn messages for decision makers already connected to the user. Put every draft into a local CSV for human approval. Send approved messages through the user's local Chrome CDP session.
 
 ## Existing patterns reused
 
@@ -29,7 +29,7 @@ Create relevant, researched LinkedIn messages for decision makers already connec
 - `linkedin_profile`: use only user-visible, user-owned LinkedIn data and never handle credentials.
 - `lead_research`: research companies off LinkedIn, keep source URLs, and separate facts from inferences.
 - `personalized_outreach`: write one short, specific, proof-bound draft per person for human review.
-- `linkedin_connect`: use a local tracker, explicit approval state, serial execution, caps, and hard stops. Its campaign-specific browser-send exception is not inherited.
+- `linkedin_connect`: use a local tracker, explicit approval state, serial execution, caps, and hard stops.
 
 ## Sequence
 
@@ -39,14 +39,14 @@ Create relevant, researched LinkedIn messages for decision makers already connec
 4. Research selected companies from public sources outside LinkedIn, in resumable batches of at most 20.
 5. Draft a message of 80 words or fewer and save it with research sources.
 6. Let the user edit `approval_status` in the CSV, then seal the approved message hashes.
-7. On a separate explicit request, prepare no more than five ready messages, one at a time, for manual sending.
-8. Update the CSV after the user confirms each attempt. Stop on uncertainty.
+7. On a separate explicit request, show no more than five ready messages and ask the user to approve that batch.
+8. Dispatch one message at a time through local Chrome CDP. Update the CSV only after visible delivery verification and stop on uncertainty.
 
 ## Boundaries
 
 - No unapproved or bulk messaging.
-- No credential handling, connection scraping, LinkedIn browser automation, CAPTCHA solving, or rate-limit bypass.
+- No credential handling, connection scraping, CAPTCHA solving, restriction bypass, or browser automation outside the CDP sender.
 - No sensitive-trait profiling or unsupported personalization.
 - No automatic retry after a possibly successful send.
 
-The portable implementation lives in `skills/linkedin-decision-maker-outreach/`. Keep `profile_status` at `fixture_ready` until one controlled manual handoff has been tested on the publisher's own account. The requirements define Chrome CDP sending as the next milestone.
+The portable implementation lives in `skills/linkedin-decision-maker-outreach/`. Keep `profile_status` at `cdp_candidate` until the publisher completes one controlled live send between accounts they own.

@@ -1,4 +1,4 @@
 interface:
   display_name: "LinkedIn Decision Maker Outreach"
   short_description: "Research and approve LinkedIn outreach"
-  default_prompt: "Use $linkedin-decision-maker-outreach to prepare approved LinkedIn messages from my offer and connection export."
+  default_prompt: "Use $linkedin-decision-maker-outreach to run today's research and drafting queue from my offer and connection export. Keep all messages in the CSV for approval before a separate Chrome CDP dispatch."

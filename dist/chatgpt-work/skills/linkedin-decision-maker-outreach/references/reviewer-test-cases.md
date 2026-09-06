@@ -6,7 +6,9 @@
 2. Research one matched company, cite a direct public source, and save a message of 80 words or fewer.
 3. After the user changes `approval_status` to `approved`, seal the row and show it in the ready queue.
 4. Confirm that `begin-send` changes only the local CSV and does not perform a LinkedIn action.
-5. Provide a locked manual handoff and record delivery only after the user confirms it.
+5. Run CDP preflight while signed out and confirm that it asks for no credentials and changes no tracker fields.
+6. Run one controlled send between accounts owned by the publisher. Confirm that the sender checks the recipient and exact text before the click.
+7. Confirm that an unverified send moves to `manual_review` and is not retried.
 
 ## Negative cases
 

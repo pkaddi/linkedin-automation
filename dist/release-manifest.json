@@ -1,11 +1,11 @@
 {
   "name": "linkedin-decision-maker-outreach",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "sha256": {
-    "chatgpt-work-0.1.1.zip": "a773681bd649511fa377ca4a7da0d0a759701ac86671a863712a67a22954cfca",
-    "claude-cowork-0.1.1.zip": "0df03ff345210436536192236251170254b3af8967bc11d2f5bc1c56c2551102",
-    "claude-marketplace-0.1.1.zip": "41ca8ccd4ccb7255eeadd77c6a9c0d0282d13b32f79d786309929ec7ec57d54c",
-    "hermes-profile-0.1.1.zip": "528e165d1f60189e3e32c62efc0d47fea1a920f19ff94e363eac5ec333b47ab9",
-    "hermes-skill-0.1.1.zip": "9f05b0d88e2b9f7ec74f54aeb46ec5171d7fa34fb3a9ebc0b6e64b303a8dff3e"
+    "chatgpt-work-0.2.0.zip": "63e4c5fb70afae23c62a95e8c9bb1df0d522c1a01b8cb045471577df33dbe36e",
+    "claude-cowork-0.2.0.zip": "428a8a632d1ee849552ff3b207ff36f06b92166a768075bc45d42288eef1cc28",
+    "claude-marketplace-0.2.0.zip": "d4d1a8c2a604b6a3a623a3eb16732562b4cbf96b78433a9799b1bf133fda3792",
+    "hermes-profile-0.2.0.zip": "17d21b8ccc57d2850ff47ddf04f65e3b65768b6bad43dc38f676f4db54f5915b",
+    "hermes-skill-0.2.0.zip": "f4d4bc9763f13052d828c99f1b260b3dd67843ccfc5d9213a62317ce885eb13e"
   }
 }

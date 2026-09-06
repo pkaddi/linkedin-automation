@@ -8,7 +8,7 @@ The plugin must never treat a draft as permission to send a message. The user mu
 
 ## Current implementation status
 
-Version 0.1.1 is a local preparation, review, and tracking tool. It does not connect to LinkedIn and cannot send a LinkedIn message.
+Version 0.2.0 is a local preparation, review, tracking, and Chrome CDP delivery tool. The CDP sender is implemented. The controlled live-send acceptance test must still be completed by the publisher with accounts they own.
 
 The current code can complete the following work.
 
@@ -16,11 +16,12 @@ The current code can complete the following work.
 2. It matches decision maker roles and keeps research, sources, drafts, approvals, and delivery history in `outreach.csv`.
 3. It seals the exact recipient and message with SHA 256 hashes, and it rejects a changed recipient or message.
 4. It prepares a queue of up to five approved rows and records local state changes.
-5. It builds packages for Hermes, Claude Cowork, Claude marketplaces, and ChatGPT Work or Codex.
+5. It attaches to a user-managed Chrome process through CDP and sends only exact, approved messages.
+6. It builds packages for Hermes, Claude Cowork, Claude marketplaces, and ChatGPT Work or Codex.
 
-The `ready`, `begin-send`, `mark-sent`, and `mark-failed` commands only read or update the local CSV file. They do not open LinkedIn, control a browser, paste a message, click Send, or verify delivery.
+The `ready`, `begin-send`, `mark-sent`, and `mark-failed` commands only read or update the local CSV file. Browser operations live in the separate `linkedin_cdp.py` sender, which calls the same tracker state checks.
 
-The current code does not contain Chrome CDP support, Playwright, Selenium, a LinkedIn API client, OAuth, or a messaging connector. Manual sending is the only usable delivery path in version 0.1.1.
+The CDP sender uses Playwright's maintained CDP attachment client. It does not contain Selenium, a LinkedIn API client, OAuth, or a messaging connector. Manual sending remains a recovery path.
 
 ## Supported inputs
 
@@ -106,9 +107,9 @@ Version 0.1.1 can prepare a manual delivery handoff. The plugin shows the recipi
 
 The plugin processes no more than five ready messages in one run, and it handles one message at a time. If delivery is unclear, the row moves to `manual_review`. The plugin must not treat an uncertain message as safe to retry.
 
-## Next implementation milestone
+## Chrome CDP delivery
 
-Version 0.2.0 must add working LinkedIn message sending through Chrome CDP. CDP means the Chrome DevTools Protocol, which lets local code control an existing Chrome browser.
+Version 0.2.0 adds LinkedIn message sending through Chrome CDP. CDP means the Chrome DevTools Protocol, which lets local code control an existing Chrome browser.
 
 Chrome CDP must be the only automated LinkedIn transport. Version 0.2.0 must not add a LinkedIn API client, an OAuth flow, a host supplied messaging connector, or a generic connector interface. Manual handoff may remain as a recovery path, but all automatic sending must use CDP.
 
@@ -131,11 +132,11 @@ The sender must not retry an uncertain send. It must not solve a CAPTCHA, bypass
 
 LinkedIn selectors must live in a versioned selector file instead of being spread through the sending code. Each important control must have a small ordered set of selectors. A missing selector must produce a clear error and must not cause a click on an unverified element.
 
-## Required CDP commands and files
+## CDP commands and files
 
-Version 0.2.0 must add a dedicated CDP sender under the canonical skill. The distribution builder must copy the sender and its selector file into every package.
+Version 0.2.0 includes a dedicated CDP sender under the canonical skill. The distribution builder copies the sender and its selector file into every package.
 
-The planned files are `scripts/linkedin_cdp.py` and `references/linkedin-selectors.json`. The sender may use a maintained CDP library, but it must attach through CDP and must not launch a hidden or separate browser.
+The files are `scripts/linkedin_cdp.py` and `references/linkedin-selectors.json`. The sender uses a maintained CDP library, attaches through CDP, and does not launch a hidden or separate browser.
 
 The sender must provide a read only preflight command. The command checks the CDP endpoint, Chrome version, LinkedIn sign in state, and required selectors. It must not open a composer or change the tracker.
 
@@ -165,7 +166,7 @@ The builder creates the following outputs from the same canonical skill.
 
 The builder creates deterministic ZIP files and records each SHA 256 checksum in `release-manifest.json`.
 
-## Current release acceptance requirements
+## Version 0.1.1 acceptance requirements
 
 Version 0.1.1 is accepted when all of the following statements are true.
 
@@ -195,10 +196,8 @@ Version 0.2.0 is accepted only when all of the following statements are true.
 9. Automated tests cover the CDP state changes, recipient mismatch, text mismatch, selector failure, signed out state, and uncertain delivery.
 10. The Hermes, Claude Cowork, Claude marketplace, and ChatGPT Work or Codex packages contain the CDP sender and pass their validators.
 
-## Work not included in version 0.1.1
+## Work not included
 
-The current release does not include Chrome CDP message sending, automatic connection export, a hosted database, a web dashboard, or multiuser access.
-
-Version 0.2.0 will add CDP sending. It will not add a LinkedIn API client, OAuth, or another automated transport.
+The release does not include automatic connection export, a hosted database, a web dashboard, or multiuser access. It does not add a LinkedIn API client, OAuth, or another automated transport.
 
 The release does not include a public publisher identity, final license file, logo, privacy policy URL, terms URL, support URL, or marketplace submission. The repository uses the working publisher name "Hermes Stuff" and a proprietary marker until the owner chooses the final release details.

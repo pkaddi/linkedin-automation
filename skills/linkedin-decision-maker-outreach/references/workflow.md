@@ -14,6 +14,8 @@ Do not use sensitive traits, private-life details, or unsupported assumptions to
 
 ## 3. Company research
 
+Run `research-queue --tracker outreach.csv --limit 20` at the start of a daily preparation run. The command returns only confirmed decision makers who still need research.
+
 For each confirmed candidate:
 
 - identify the official company site;
@@ -38,11 +40,11 @@ If the user edits an approved message later, the hash no longer matches. The wor
 
 ## 6. Separate dispatch run
 
-Sending requires an explicit request in the current conversation. The current release does not connect to LinkedIn. Process no more than five rows, serially, and show the exact sealed text for the user to send manually.
+Sending requires an explicit request in the current conversation. First run the read-only CDP preflight. Then show no more than five ready rows and ask the user to approve the displayed batch.
 
-Before each manual handoff, show the recipient and exact text. Update the tracker only after the user confirms delivery.
+After confirmation, run `linkedin_cdp.py dispatch` with `--confirm-send`. The sender attaches to the user's visible Chrome session, processes rows one at a time, and checks the recipient and exact text before every click.
 
-Delivery uncertainty is a hard stop. Mark the row `manual_review` without retrying so the user can inspect the conversation.
+The sender checks for a new outgoing message with the exact sealed text before it records `sent`. Delivery uncertainty is a hard stop. Mark the row `manual_review` without retrying so the user can inspect the conversation.
 
 ## 7. Handoff
 

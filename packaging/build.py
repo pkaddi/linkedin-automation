@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 PACKAGE_ID = "linkedin-decision-maker-outreach"
-VERSION = "0.1.1"
+VERSION = "0.2.0"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SKILLS_SOURCE = REPO_ROOT / "skills"
 GENERATED_MARKER = ".generated-by-linkedin-outreach-builder"
@@ -32,8 +32,8 @@ CLAUDE_MARKETPLACE = {
             "name": PACKAGE_ID,
             "source": f"./plugins/{PACKAGE_ID}",
             "description": (
-                "Create sourced LinkedIn drafts in an approval CSV and track exact "
-                "approved text through a manual send handoff."
+                "Create sourced LinkedIn drafts in an approval CSV and send exact "
+                "approved text through a user-managed Chrome CDP session."
             ),
             "version": VERSION,
         }
@@ -66,6 +66,9 @@ def inspect_source() -> None:
         REPO_ROOT / "REQUIREMENTS.md",
         SKILLS_SOURCE / PACKAGE_ID / "SKILL.md",
         SKILLS_SOURCE / PACKAGE_ID / "scripts" / "outreach_tracker.py",
+        SKILLS_SOURCE / PACKAGE_ID / "scripts" / "linkedin_cdp.py",
+        SKILLS_SOURCE / PACKAGE_ID / "references" / "linkedin-selectors.json",
+        SKILLS_SOURCE / PACKAGE_ID / "requirements.txt",
     ]
     missing = [str(path) for path in required if not path.is_file()]
     if missing:

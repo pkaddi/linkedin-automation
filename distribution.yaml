@@ -1,6 +1,6 @@
 name: linkedin-decision-maker-outreach
-version: 0.1.1
-description: Local research, approval, and manual delivery tracking for the user's own first-degree LinkedIn connections.
+version: 0.2.0
+description: Sourced LinkedIn outreach that requires approval and sends through local Chrome CDP.
 hermes_requires: ">=0.16.0"
 author: hermes-stuff
 license: Proprietary

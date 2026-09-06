@@ -116,6 +116,17 @@ def test_init_filters_roles_and_excludes_email(tmp_path: Path) -> None:
     run_tracker("validate", "--tracker", tracker)
 
 
+def test_daily_research_queue_returns_only_pending_matches(tmp_path: Path) -> None:
+    tracker, rows = initialize(tmp_path)
+    result = run_tracker("research-queue", "--tracker", tracker, "--limit", 20)
+    assert result["count"] == 2
+    assert {item["full_name"] for item in result["research"]} == {
+        "Asha Rao",
+        "'=FORMULA Patel",
+    }
+    run_tracker("research-queue", "--tracker", tracker, "--limit", 21, expected=2)
+
+
 def test_repeat_import_keeps_research_and_draft(tmp_path: Path) -> None:
     tracker, target = prepare_approved_row(tmp_path)
     run_tracker(
@@ -211,6 +222,8 @@ def test_approval_hash_allows_exact_send_state_transition(tmp_path: Path) -> Non
         payload_hash,
     )
     assert sent["send_status"] == "sent"
+    stored = next(row for row in read_rows(tracker) if row["record_id"] == target["record_id"])
+    assert stored["send_attempt_id"]
     run_tracker("validate", "--tracker", tracker)
 
 

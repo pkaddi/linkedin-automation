@@ -10,11 +10,11 @@ python packaging/build.py
 
 The builder writes the following files to `dist/`.
 
-1. `chatgpt-work-0.1.1.zip` contains the ChatGPT Work and Codex plugin.
-2. `claude-cowork-0.1.1.zip` contains the Claude Cowork plugin.
-3. `claude-marketplace-0.1.1.zip` contains a Git repository layout for a Claude marketplace.
-4. `hermes-skill-0.1.1.zip` contains the standalone Hermes skill.
-5. `hermes-profile-0.1.1.zip` contains the Hermes profile distribution.
+1. `chatgpt-work-0.2.0.zip` contains the ChatGPT Work and Codex plugin.
+2. `claude-cowork-0.2.0.zip` contains the Claude Cowork plugin.
+3. `claude-marketplace-0.2.0.zip` contains a Git repository layout for a Claude marketplace.
+4. `hermes-skill-0.2.0.zip` contains the standalone Hermes skill.
+5. `hermes-profile-0.2.0.zip` contains the Hermes profile distribution.
 
 The builder also writes `release-manifest.json` with a SHA 256 checksum for each ZIP file. The unpacked directories in `dist/` are the exact inputs used to create those files.
 
@@ -72,6 +72,6 @@ Validate the package with the current OpenAI plugin validator before submission.
 
 The owner must choose the final publisher name and license before public release. Public listings also need a website, privacy policy, terms, support contact, logo, and any required screenshots.
 
-The owner must test one controlled manual handoff against their own LinkedIn account. Version 0.1.1 does not connect to LinkedIn or send messages. Version 0.2.0 is the next milestone and will use Chrome CDP as its only automated LinkedIn transport.
+The owner must run the read-only preflight and one controlled CDP send between accounts they own. Confirm that the exact message appears as a new outgoing message and that the tracker records the conversation URL, attempt ID, verification time, and proof. Do not present version 0.2.0 as live-tested until this check passes.
 
 Do not commit customer exports, trackers, credentials, cookies, or private research to the release repository.

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Manage the approval CSV for LinkedIn decision maker outreach.
 
-The script never opens LinkedIn and never sends a message. It keeps the local
-CSV in a valid state while the host agent performs research, drafting, and a
-manual send handoff.
+This module owns tracker state and contains no browser code. The separate CDP
+sender imports it so manual and automated delivery use the same validation and
+approval checks.
 """
 
 from __future__ import annotations
@@ -16,6 +16,7 @@ import os
 import re
 import sys
 import tempfile
+import uuid
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -23,7 +24,7 @@ from typing import Iterable
 from urllib.parse import urlsplit, urlunsplit
 
 
-SCHEMA_VERSION = "1"
+SCHEMA_VERSION = "2"
 MAX_MESSAGE_WORDS = 80
 
 FIELDS = [
@@ -54,6 +55,10 @@ FIELDS = [
     "send_status",
     "send_started_at",
     "sent_at",
+    "conversation_url",
+    "send_attempt_id",
+    "delivery_verified_at",
+    "delivery_proof",
     "last_error",
     "updated_at",
 ]
@@ -292,9 +297,18 @@ def load_tracker(path: Path) -> list[dict[str, str]]:
         raise TrackerError(f"Tracker not found: {path}")
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
-        if reader.fieldnames != FIELDS:
-            raise TrackerError("Tracker columns do not match schema version 1.")
+        legacy_fields = [
+            field
+            for field in FIELDS
+            if field
+            not in {"conversation_url", "send_attempt_id", "delivery_verified_at", "delivery_proof"}
+        ]
+        if reader.fieldnames not in (FIELDS, legacy_fields):
+            raise TrackerError("Tracker columns do not match schema version 1 or 2.")
         rows = [{field: row.get(field, "") for field in FIELDS} for row in reader]
+        if reader.fieldnames == legacy_fields:
+            for row in rows:
+                row["schema_version"] = SCHEMA_VERSION
     duplicates = [key for key, count in Counter(row["record_id"] for row in rows).items() if count > 1]
     if duplicates:
         raise TrackerError(f"Duplicate record_id values: {', '.join(duplicates)}")
@@ -441,6 +455,10 @@ def command_init(args: argparse.Namespace) -> dict[str, object]:
                 prior["approved_payload_sha256"] = ""
                 prior["send_status"] = "not_ready"
                 prior["send_started_at"] = ""
+                prior["conversation_url"] = ""
+                prior["send_attempt_id"] = ""
+                prior["delivery_verified_at"] = ""
+                prior["delivery_proof"] = ""
                 prior["last_error"] = "Source or offer changed; review the row again." if changed else ""
             merged.append(prior)
         else:
@@ -472,6 +490,11 @@ def command_set_role(args: argparse.Namespace) -> dict[str, object]:
     row["approved_message_sha256"] = ""
     row["approved_payload_sha256"] = ""
     row["send_status"] = "not_ready"
+    row["send_started_at"] = ""
+    row["conversation_url"] = ""
+    row["send_attempt_id"] = ""
+    row["delivery_verified_at"] = ""
+    row["delivery_proof"] = ""
     row["updated_at"] = now_iso()
     write_tracker(args.tracker, rows)
     return {"record_id": args.record_id, "role_match": args.match}
@@ -511,6 +534,10 @@ def command_set_draft(args: argparse.Namespace) -> dict[str, object]:
             "approved_payload_sha256": "",
             "send_status": "not_ready",
             "send_started_at": "",
+            "conversation_url": "",
+            "send_attempt_id": "",
+            "delivery_verified_at": "",
+            "delivery_proof": "",
             "last_error": "",
             "updated_at": now_iso(),
         }
@@ -603,18 +630,47 @@ def command_ready(args: argparse.Namespace) -> dict[str, object]:
     return {"ready": ready, "count": len(ready)}
 
 
+def command_research_queue(args: argparse.Namespace) -> dict[str, object]:
+    if not 1 <= args.limit <= 20:
+        raise TrackerError("Research limit must be between 1 and 20.")
+    rows = load_tracker(args.tracker)
+    selected = [
+        {
+            "record_id": row["record_id"],
+            "full_name": row["full_name"],
+            "title": row["title"],
+            "company": row["company"],
+            "profile_url": row["profile_url"],
+            "matched_role": row["matched_role"],
+        }
+        for row in rows
+        if row["role_match"] == "yes"
+        and row["research_status"] == "pending"
+        and row["send_status"] != "sent"
+    ][: args.limit]
+    return {"research": selected, "count": len(selected)}
+
+
 def command_begin_send(args: argparse.Namespace) -> dict[str, object]:
     rows = load_tracker(args.tracker)
     row = row_by_id(rows, args.record_id)
+    in_flight = [item["record_id"] for item in rows if item["send_status"] == "sending"]
+    if in_flight:
+        raise TrackerError(f"Another message is already sending: {in_flight[0]}")
     payload = ready_row(row)
     if args.expected_payload_sha != row["approved_payload_sha256"]:
         raise TrackerError("The expected payload hash does not match the approved recipient and draft.")
     row["send_status"] = "sending"
     row["send_started_at"] = now_iso()
+    row["send_attempt_id"] = args.attempt_id or str(uuid.uuid4())
+    row["conversation_url"] = ""
+    row["delivery_verified_at"] = ""
+    row["delivery_proof"] = ""
     row["last_error"] = ""
     row["updated_at"] = now_iso()
     write_tracker(args.tracker, rows)
     payload["send_status"] = "sending"
+    payload["send_attempt_id"] = row["send_attempt_id"]
     return payload
 
 
@@ -632,10 +688,19 @@ def command_mark_sent(args: argparse.Namespace) -> dict[str, object]:
         raise TrackerError("The sent recipient and message do not match the approved payload.")
     row["send_status"] = "sent"
     row["sent_at"] = now_iso()
+    row["conversation_url"] = clean_text(args.conversation_url)
+    row["delivery_verified_at"] = now_iso() if args.delivery_proof else ""
+    row["delivery_proof"] = safe_import_text(args.delivery_proof)
     row["last_error"] = ""
     row["updated_at"] = now_iso()
     write_tracker(args.tracker, rows)
-    return {"record_id": args.record_id, "send_status": "sent", "sent_at": row["sent_at"]}
+    return {
+        "record_id": args.record_id,
+        "send_status": "sent",
+        "sent_at": row["sent_at"],
+        "conversation_url": row["conversation_url"],
+        "delivery_verified_at": row["delivery_verified_at"],
+    }
 
 
 def command_mark_failed(args: argparse.Namespace) -> dict[str, object]:
@@ -714,16 +779,26 @@ def build_parser() -> argparse.ArgumentParser:
     ready.add_argument("--limit", type=int, default=5)
     ready.set_defaults(handler=command_ready)
 
+    research_queue = subparsers.add_parser(
+        "research-queue", help="Print the next matched rows needing research and drafts."
+    )
+    research_queue.add_argument("--tracker", type=Path, required=True)
+    research_queue.add_argument("--limit", type=int, default=20)
+    research_queue.set_defaults(handler=command_research_queue)
+
     begin = subparsers.add_parser("begin-send", help="Lock one approved row before dispatch.")
     begin.add_argument("--tracker", type=Path, required=True)
     begin.add_argument("--id", "--record-id", dest="record_id", required=True)
     begin.add_argument("--expected-payload-sha", required=True)
+    begin.add_argument("--attempt-id", default="")
     begin.set_defaults(handler=command_begin_send)
 
-    sent = subparsers.add_parser("mark-sent", help="Mark sent after the user confirms manual delivery.")
+    sent = subparsers.add_parser("mark-sent", help="Mark sent after delivery is verified.")
     sent.add_argument("--tracker", type=Path, required=True)
     sent.add_argument("--id", "--record-id", dest="record_id", required=True)
     sent.add_argument("--expected-payload-sha", required=True)
+    sent.add_argument("--conversation-url", default="")
+    sent.add_argument("--delivery-proof", default="")
     sent.set_defaults(handler=command_mark_sent)
 
     failed = subparsers.add_parser("mark-failed", help="Record a failed or uncertain send.")

@@ -1,7 +1,7 @@
 {
   "name": "linkedin-decision-maker-outreach",
-  "version": "0.1.1",
-  "description": "Research, draft, approve, and track manual LinkedIn outreach to relevant first-degree connections.",
+  "version": "0.2.0",
+  "description": "Research, approve, and send exact LinkedIn outreach through a user-managed Chrome CDP session.",
   "author": {
     "name": "Hermes Stuff"
   },
@@ -10,14 +10,14 @@
   "interface": {
     "displayName": "LinkedIn Decision-Maker Outreach",
     "shortDescription": "Create reviewed LinkedIn outreach drafts.",
-    "longDescription": "Turn a LinkedIn connections export, an offer, and target roles into researched drafts in an approval CSV, then track manual delivery. The current release does not connect to LinkedIn.",
+    "longDescription": "Turn a LinkedIn connections export, an offer, and target roles into sourced drafts, seal the approved recipient and text, then dispatch through the user's signed-in Chrome CDP session.",
     "developerName": "Hermes Stuff",
     "category": "Productivity",
-    "capabilities": ["Research", "Drafting", "Local CSV tracking"],
+    "capabilities": ["Research", "Drafting", "Local CSV tracking", "Chrome CDP dispatch"],
     "defaultPrompt": [
       "Create an outreach tracker from my offer and LinkedIn connections export.",
-      "Research the approved target companies and draft concise LinkedIn messages.",
-      "Prepare up to five sealed messages for manual sending from my tracker."
+      "Run today's company research and message drafting queue.",
+      "Send up to five sealed messages through my local Chrome CDP session."
     ]
   }
 }

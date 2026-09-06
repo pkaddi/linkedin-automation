@@ -1,11 +1,41 @@
 ---
 name: linkedin-decision-maker-outreach
-description: Prepare personalized LinkedIn messages for relevant first-degree connections using an offer Markdown file, decision-maker roles, and a LinkedIn Connections.csv export. Use for researched drafts, local CSV approval, and manual send tracking. The current release does not connect to LinkedIn or send messages.
+description: Prepare and send personalized LinkedIn messages to relevant first-degree connections using an offer Markdown file, decision-maker roles, a LinkedIn Connections.csv export, local CSV approval, and the user's signed-in Chrome CDP session.
+metadata:
+  hermes:
+    config:
+      - key: linkedin_connections_csv
+        description: Path to the LinkedIn Connections.csv export this skill reads.
+        prompt: Path to your LinkedIn Connections.csv export
+      - key: linkedin_outreach_tracker
+        description: Path to the outreach approval CSV this skill maintains.
+        default: outreach.csv
+      - key: linkedin_offer_file
+        description: Path to the offer Markdown file used for drafting.
+        prompt: Path to your offer Markdown file
+      - key: linkedin_roles_file
+        description: Path to the text file listing one accepted decision-maker title per line.
+      - key: linkedin_cdp_url
+        description: Chrome DevTools Protocol endpoint of the user's signed-in Chrome.
+        default: http://127.0.0.1:9222
 ---
 
 # LinkedIn Decision Maker Outreach
 
-Turn a user's LinkedIn connection export into a local, reviewable outreach queue. The CSV tracker is the source of truth. Research and drafting can happen in one run. The current release provides a manual send handoff and does not connect to LinkedIn.
+Turn a user's LinkedIn connection export into a local outreach queue. The CSV tracker is the source of truth. Research and drafting can happen in one run. An approved dispatch uses the user's signed-in Chrome through the Chrome DevTools Protocol, which is called CDP below.
+
+## Preconditions
+
+Hermes injects a `[Skill config]` block with the resolved values of the keys above. Read it first. A value shown as `(not set)` is not configured, so ask the user for it rather than guessing a path.
+
+Check these in order and stop at the first failure. Say plainly what is missing and what the user needs to do.
+
+1. **The connections export.** `linkedin_connections_csv` must point to a readable `Connections.csv` from the user's own LinkedIn account. If it is unset or missing, ask the user for the path. If they do not have one, tell them to request it from LinkedIn under Settings, then Data privacy, then Get a copy of your data, and stop. Never crawl LinkedIn to build the list.
+2. **The offer and roles.** `linkedin_offer_file` must point to an offer Markdown file. `linkedin_roles_file` may be a file or titles given inline. Ask for whichever is missing.
+3. **The tracker.** `linkedin_outreach_tracker` defaults to `outreach.csv` in the working directory. Create it with `init` when it does not exist.
+4. **Chrome, for sending only.** Research, drafting, and approval never need Chrome. Check it only when the user asks to send, using the procedure in Check Chrome.
+
+Use the configured paths in every command below in place of the example filenames.
 
 ## Inputs
 
@@ -42,6 +72,15 @@ python "<skill-directory>/scripts/outreach_tracker.py" set-role \
 Research and draft only rows with `role_match=yes`, unless the user resolves a `review` row. Never infer authority from a protected or sensitive trait.
 
 Process at most 20 matched rows per research and drafting run. Resume from the same tracker in later runs until all matched rows are handled. This keeps sources and drafts reviewable even when the export is large.
+
+At the start of each daily preparation run, list the next work items:
+
+```bash
+python3 "<skill-directory>/scripts/outreach_tracker.py" research-queue \
+  --tracker outreach.csv --limit 20
+```
+
+Research and draft each returned row. Stop when the queue is empty or the daily limit is reached.
 
 ## Research the company
 
@@ -87,40 +126,65 @@ python "<skill-directory>/scripts/outreach_tracker.py" summary --tracker outreac
 
 The seal binds the recipient name, profile URL, and exact message. Any edit to that payload invalidates approval. Reapproval and resealing are required. The state rules and columns are in [tracker-schema.md](references/tracker-schema.md).
 
-## Hand off approved messages
+## Check Chrome
 
-Only enter this section when the user explicitly asks for approved rows that are ready to send. Preparing drafts or approving the CSV is not permission to mark a message as sent.
-
-The current release has no LinkedIn connection code. It must show the profile link and exact sealed text so the user can paste and send the message. Do not claim that `begin-send` or `mark-sent` performs a LinkedIn action. Both commands update only the local CSV tracker.
-
-List ready rows first and cap each run at five:
+Install the Python CDP client once:
 
 ```bash
-python "<skill-directory>/scripts/outreach_tracker.py" ready --tracker outreach.csv --limit 5
+python3 -m pip install -r "<skill-directory>/requirements.txt"
 ```
 
-For each row, one at a time:
+The user must start a visible Chrome process with a local CDP endpoint and sign in to LinkedIn in that Chrome profile. Never ask for a password or cookie. Run the read-only check before dispatch:
 
-1. Show the recipient name, stored profile URL, exact message, and approved payload hash.
-2. Ask the user to confirm that they want the manual send handoff.
-3. Lock the exact approved text:
+```bash
+python3 "<skill-directory>/scripts/linkedin_cdp.py" preflight \
+  --cdp-url http://127.0.0.1:9222
+```
 
-   ```bash
-   python "<skill-directory>/scripts/outreach_tracker.py" begin-send \
-     --tracker outreach.csv --record-id RECORD_ID \
-     --expected-payload-sha APPROVED_PAYLOAD_SHA256
-   ```
+The check may navigate a new tab to LinkedIn Messaging. It does not open a composer or change the tracker.
 
-4. Wait while the user sends the message in LinkedIn. Ask them to confirm that the exact message appears as a new outgoing message.
-5. Record success only after the user's confirmation:
+Handle each failure as follows. In every case, stop and wait for the user. Never retry in a loop.
 
-   ```bash
-   python "<skill-directory>/scripts/outreach_tracker.py" mark-sent \
-     --tracker outreach.csv --record-id RECORD_ID \
-     --expected-payload-sha APPROVED_PAYLOAD_SHA256
-   ```
+- **Chrome is not reachable at the endpoint.** Chrome is not running with a debugging port, or it is running without one. Give the user the launch command, substituting the port from `linkedin_cdp_url`, and ask them to run it and sign in:
 
-Keep one message in flight. Do not infer successful delivery from a page transition or lack of an error.
+  ```bash
+  google-chrome --remote-debugging-port=9222 --user-data-dir="$HOME/.chrome-linkedin-outreach"
+  ```
+
+  On macOS the binary is `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"`. If Chrome is not installed, say so and point the user to https://www.google.com/chrome/.
+- **Chrome is reachable but LinkedIn is signed out.** Ask the user to sign in to LinkedIn in that visible Chrome window and tell you when they are done, then run preflight again. Never ask for a password or a cookie, never type credentials, and never open a composer while signed out.
+- **An account warning, checkpoint, or captcha appears.** Report exactly what is on screen and stop. Do not attempt to clear it.
+- **A required control is missing.** The LinkedIn interface has changed. Report which control was not found and stop.
+
+Only proceed to sending after preflight passes.
+
+## Send approved messages
+
+Only enter this section when the user explicitly asks to send approved rows in the current session. Preparing drafts, editing the CSV, or running preflight is not permission to send.
+
+First, list up to five ready rows and show the exact recipients and sealed messages:
+
+```bash
+python3 "<skill-directory>/scripts/outreach_tracker.py" ready \
+  --tracker outreach.csv --limit 5
+```
+
+Second, ask the user to confirm the displayed batch. After confirmation, make one explicit dispatch call:
+
+```bash
+python3 "<skill-directory>/scripts/linkedin_cdp.py" dispatch \
+  --tracker outreach.csv --cdp-url http://127.0.0.1:9222 \
+  --limit 5 --confirm-send
+```
+
+The sender processes one row at a time. For each row it performs the following checks:
+
+1. It reloads the tracker and checks the approval seal.
+2. It opens the stored profile and checks the profile URL and recipient name.
+3. It opens the composer and checks the recipient and exact message text.
+4. It records `sending`, clicks Send, and requires the exact text to appear as a new outgoing message.
+
+The sender records the attempt ID, conversation URL, verification time, and delivery proof. It records `sent` only after the final check passes.
 
 If failure is certain before Send was clicked, record it as safe to retry. If Send may have been clicked, do not retry; move the row to manual review and stop the batch:
 
@@ -135,11 +199,12 @@ Omit `--safe-to-retry` whenever delivery is uncertain.
 ## Boundaries
 
 - Never send an unapproved, changed, rejected, or role-mismatched message.
-- Never automate LinkedIn's website, solve CAPTCHAs, bypass rate limits, conceal automation, or work around account restrictions.
+- Use only `linkedin_cdp.py` for LinkedIn browser automation. Never solve CAPTCHAs, bypass restrictions, conceal automation, or use another automated transport.
 - Never request or store passwords, session cookies, or LinkedIn credentials.
 - Never run concurrent sending sessions or send more than five messages per run.
 - Stop on an account warning, checkpoint, unexpected audience, ambiguous delivery, or changed LinkedIn UI.
 - Follow the user's employer policy, LinkedIn terms, and applicable outreach law.
-- Use manual handoff while keeping the CSV state accurate. The requirements define CDP automation as the next milestone, but the CDP sender is not part of this release.
+- A remote CDP endpoint requires the user's separate and explicit `--allow-remote-cdp` choice. Prefer the local default.
+- Manual handoff remains available when the user chooses it, but never treat a manual action as verified without the user's confirmation.
 
 Use [reviewer-test-cases.md](references/reviewer-test-cases.md) when testing or submitting the package for public distribution.
